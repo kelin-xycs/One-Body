@@ -1,0 +1,310 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>One-Body</title>
+    <script type="text/javascript">
+
+        var x1;
+        var y1;
+        var x2;
+        var y2;
+
+        var old_x2;
+        var old_y2;
+
+        var v_x2;
+        var v_y2;
+
+        var stepInterval;
+        var diffCount;
+
+        var m1;
+        var m2;
+        var G;
+
+        var ballR = 10;
+
+        var color1 = "red";
+        var color2 = "blue";
+
+        var trackPoints = [];
+
+        var isStarted;
+
+        function btnPrepare_Click() {
+
+            if (isStarted) {
+
+                alert("已经在演示中，请先停止再重新开始。");
+                return;
+            }
+
+            clearCurrent();
+            trackPoints = [];
+
+            x1 = parseFloat(document.getElementById("txtStartX1").value);
+            y1 = parseFloat(document.getElementById("txtStartY1").value);
+            x2 = parseFloat(document.getElementById("txtStartX2").value);
+            y2 = parseFloat(document.getElementById("txtStartY2").value);
+
+            if (isNaN(x1))
+            {
+                alert("x1 应填写数字 。");
+                return;
+            }
+            if (isNaN(y1))
+            {
+                alert("y1 应填写数字 。");
+                return;
+            }
+            if (isNaN(x2))
+            {
+                alert("x2 应填写数字 。");
+                return;
+            }
+            if (isNaN(y2))
+            {
+                alert("y2 应填写数字 。");
+                return;
+            }
+
+            v_x2 = parseFloat(document.getElementById("txtStartV_X2").value);
+            v_y2 = parseFloat(document.getElementById("txtStartV_Y2").value);
+
+            if (isNaN(v_x2))
+            {
+                alert("v_x2 应填写数字 。");
+                return;
+            }
+            if (isNaN(v_y2))
+            {
+                alert("v_y2 应填写数字 。");
+                return;
+            }
+
+            m1 = parseFloat(document.getElementById("txtM1").value);
+            m2 = parseFloat(document.getElementById("txtM2").value);
+
+            if (isNaN(m1))
+            {
+                alert("m1 应填写数字 。");
+                return;
+            }
+            if (isNaN(m2))
+            {
+                alert("m2 应填写数字 。");
+                return;
+            }
+
+            G = parseFloat(document.getElementById("txtG").value);
+
+            if (isNaN(G))
+            {
+                alert("G 应填写数字 。");
+                return;
+            }
+
+            stepInterval = parseFloat(document.getElementById("txtStepInterval").value);
+
+            if (isNaN(stepInterval))
+            {
+                alert("步进周期 应填写数字 。");
+                return;
+            }
+
+            if (stepInterval < 1)
+            {
+                alert("步进周期 应大于 1 。");
+                return;
+            }
+
+            diffCount = parseFloat(document.getElementById("txtDiffCount").value);
+
+            if (isNaN(diffCount))
+            {
+                alert("步进周期 应填写数字 。");
+                return;
+            }
+
+            if (diffCount < 1)
+            {
+                alert("步进周期 应大于等于 1 。");
+                return;
+            }
+
+            drawBall(x1, y1, ballR, color1);
+            drawBall(x2, y2, ballR, color2);
+        }
+
+        function btnStart_Click() {
+
+            if (isStarted) {
+
+                alert("已经在演示中。");
+
+                return;
+            }
+
+            isStarted = true;
+
+            nextFrame();
+        }
+
+        function btnStop_Click() {
+
+            isStarted = false;
+        }
+
+        function nextFrame() {
+
+            if (!isStarted)
+                return;
+
+            var ex = calculate();
+
+            if (ex == "hit") {
+
+                alert("相撞， Game Over 。");
+                return;
+            }
+
+            clearOld();
+
+            drawTrack();
+            drawBall(x1, y1, ballR, color1);
+            drawBall(x2, y2, ballR, color2);
+
+            window.setTimeout(nextFrame, stepInterval);
+        }
+
+        function calculate() {
+
+            old_x2 = x2;
+            old_y2 = y2;
+
+            for (let i = 0; i < diffCount; i++) {
+
+
+                var l = Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
+
+                if (l < 20)
+                    return "hit";
+
+                var f = G * m1 * m2 / Math.pow(l, 2);
+
+                var f_x2 = f * (x1 - x2) / l;
+                var f_y2 = f * (y1 - y2) / l;
+
+                var dt = stepInterval / 1000 / diffCount;
+
+                var dv_x2 = (f_x2 / m2) * dt;
+                var dv_y2 = (f_y2 / m2) * dt;
+
+                v_x2 += dv_x2;
+                v_y2 += dv_y2;
+
+                var dx2 = v_x2 * dt;
+                var dy2 = v_y2 * dt;
+
+                x2 += dx2;
+                y2 += dy2;
+
+            }
+
+
+            if (trackPoints.length < 1000) {
+
+                trackPoints[trackPoints.length] = { x: old_x2, y: old_y2 };
+
+            }
+
+        }
+
+        function drawTrack() {
+
+            var canvas =document.getElementById("myCanvas");
+            var context = canvas.getContext("2d");
+
+            context.strokeStyle = color2;
+
+            for (let i = 0; i < trackPoints.length; i++) {
+
+                let p = trackPoints[i];
+
+                context.strokeRect(p.x, p.y, 1, 1);
+            }
+            
+        }
+
+        function clearCurrent() {
+
+            clear(x1, y1, x2, y2);
+        }
+
+        function clearOld() {
+
+            clear(x1, y1, old_x2, old_y2);
+        }
+
+        function clear(p_x1, p_y1, p_x2, p_y2) {
+
+            var canvas =document.getElementById("myCanvas");
+            var context = canvas.getContext("2d");
+
+            var d = ballR * 2 + 2;
+
+            context.clearRect(p_x1 - ballR - 1, p_y1 - ballR - 1, d, d);
+            context.clearRect(p_x2 - ballR - 1, p_y2 - ballR - 1, d, d);
+
+            for (let i = 0; i < trackPoints.length; i++) {
+
+                let p = trackPoints[i];
+
+                context.clearRect(p.x - 1, p.y - 1, 3, 3);
+            }
+        }
+
+        function drawBall(x, y, r, color) {
+
+            var canvas =document.getElementById("myCanvas");
+			var context= canvas.getContext("2d");
+            context.fillStyle = color;
+			context.beginPath();
+			context.arc(x,y,r,Math.PI*2,0,true);
+			context.closePath();
+            context.fill();
+        }
+
+        function btnCanvasSize_Click() {
+
+            var canvas = document.getElementById("myCanvas");
+
+            var width = parseFloat(document.getElementById("txtCanvasWidth").value);
+            var height = parseFloat(document.getElementById("txtCanvasHeight").value);
+
+            canvas.width = width;
+            canvas.height = height;
+        }
+    </script>
+</head>
+<body>
+    开始位置 （演示画面 坐标系 是 以 左上角 为 原点 的， x 轴 正方向 是 向右， y 轴 正方向 是 向下）<br />质点 1： x1 <input id="txtStartX1" value="300" /> 像素  &nbsp;&nbsp;&nbsp;&nbsp; y1 <input id="txtStartY1" value="200" /> 像素<br />
+    质点 2： x2 <input id="txtStartX2" value="400" /> 像素  &nbsp;&nbsp;&nbsp;&nbsp; y2 <input id="txtStartY2" value="200" /> 像素<br />
+    初始速度 （因为 一体问题 的 质点 1 是 “固定” 的 ， 所以不需要设置 质点 1 的 初始速度）<br />
+    质点 2： v_x2 <input id="txtStartV_X2" value="20" /> 像素/秒 &nbsp;&nbsp;&nbsp;&nbsp;  v_y2 <input id="txtStartV_Y2" value="20" /> 像素/秒<br />
+    质点质量 <br />质点 1： m1 <input id="txtM1" value="10" /> 千克 &nbsp;&nbsp;&nbsp;&nbsp;  m2 <input id="txtM2" value="20" /> 千克<br />
+    万有引力常量 G： <input id="txtG" value="10000" /> 牛 * 米平方 / 千克平方<br />
+    步进周期： <input id="txtStepInterval" value="200" /> 毫秒 &nbsp;&nbsp;&nbsp;&nbsp; 每个步进周期计算多少个微分： <input id="txtDiffCount" value="20" /><br />
+    步进周期 表示 每隔多长时间计算一次 质点 位置速度 并 显示一帧， 微分时间 dt = 步进周期 / 每个步进周期计算多少个微分 。 微分时间 dt 越小， 精度越高， 模拟的 质点轨迹 越接近 理论情形， 微分时间 dt 太大 会造成 模拟效果 脱离 理论情形 。 质点速度越大，微分时间 dt 应该越小，才能保持精度 。 如果 质点速度很大 而 微分时间 dt 不够小 则会 显著降低精度 和 脱离 理论情形 。<br />
+    演示程序会画出质点运动的轨迹， 质点在每一帧的位置的点称为轨迹点， 演示程序会绘制出这些点，这些点组成了轨迹 。 但是演示程序只会画出 1000 个轨迹点， 因为无限制记录轨迹点会大量耗费计算机资源 。<br />
+    <br />
+    <input type="button" value="预备" onclick="btnPrepare_Click();" style="width:200px" />
+    <input type="button" value="开始" onclick="btnStart_Click();" style="width:200px" />
+    <input type="button" value="停止" onclick="btnStop_Click();" style="width:200px" /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 停止后可以点 开始 继续
+    <br /><br />
+    演示画面大小： <input id="txtCanvasWidth" value="2000" /> 像素 × <input id="txtCanvasHeight" value="2000" /> 像素 <input type="button" value="确定" onclick="btnCanvasSize_Click();" /><br />
+    <canvas id="myCanvas" width="2000" height="2000" style="border: 1px solid;"></canvas>
+</body>
+</html>
